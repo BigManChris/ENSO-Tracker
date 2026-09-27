@@ -60,10 +60,4 @@ python -m enso.run --force     # needs internet access to NOAA
 pytest                         # uses simulated data, no internet needed
 ```
 
-## Ideas for version 2
 
-- A CNN on full Pacific temperature maps (Ham et al., *Nature* 2019), pre-trained on climate-model runs to get around the small-data problem.
-- Add wind data (westerly wind bursts often trigger El Niño).
-- Link to impacts: how RONI forecasts line up with cocoa, coffee or palm-oil prices.
-
-*A student project, not an official forecast.*
