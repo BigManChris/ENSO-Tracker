@@ -1,0 +1,172 @@
+{
+ "issued": "2026-06",
+ "data_through": "Jun 2026",
+ "made_at": "2026-09-27T02:36Z",
+ "latest_observed": {
+  "season": "AMJ 2026",
+  "roni": 0.49
+ },
+ "seasons": [
+  "MJJ 2026",
+  "JJA 2026",
+  "JAS 2026",
+  "ASO 2026",
+  "SON 2026",
+  "OND 2026",
+  "NDJ 2026",
+  "DJF 2027",
+  "JFM 2027",
+  "FMA 2027",
+  "MAM 2027"
+ ],
+ "ensemble": [
+  0.87,
+  1.16,
+  1.4,
+  1.65,
+  1.84,
+  1.97,
+  1.97,
+  1.72,
+  1.34,
+  0.83,
+  0.29
+ ],
+ "sigma": [
+  0.14,
+  0.21,
+  0.3,
+  0.38,
+  0.46,
+  0.53,
+  0.59,
+  0.64,
+  0.69,
+  0.72,
+  0.75
+ ],
+ "models": {
+  "Persistence": [
+   0.49,
+   0.49,
+   0.49,
+   0.49,
+   0.49,
+   0.49,
+   0.49,
+   0.49,
+   0.49,
+   0.49,
+   0.49
+  ],
+  "Analog": [
+   0.7,
+   0.93,
+   1.15,
+   1.38,
+   1.6,
+   1.75,
+   1.77,
+   1.62,
+   1.31,
+   0.89,
+   0.42
+  ],
+  "Ridge": [
+   0.96,
+   1.32,
+   1.6,
+   1.84,
+   2.03,
+   2.12,
+   2.05,
+   1.79,
+   1.36,
+   0.82,
+   0.25
+  ],
+  "Neural net": [
+   0.95,
+   1.24,
+   1.46,
+   1.73,
+   1.89,
+   2.05,
+   2.11,
+   1.74,
+   1.36,
+   0.77,
+   0.2
+  ]
+ },
+ "probabilities": [
+  {
+   "la_nina": 0.0,
+   "neutral": 0.003,
+   "el_nino": 0.997
+  },
+  {
+   "la_nina": 0.0,
+   "neutral": 0.001,
+   "el_nino": 0.999
+  },
+  {
+   "la_nina": 0.0,
+   "neutral": 0.001,
+   "el_nino": 0.999
+  },
+  {
+   "la_nina": 0.0,
+   "neutral": 0.001,
+   "el_nino": 0.999
+  },
+  {
+   "la_nina": 0.0,
+   "neutral": 0.002,
+   "el_nino": 0.998
+  },
+  {
+   "la_nina": 0.0,
+   "neutral": 0.003,
+   "el_nino": 0.997
+  },
+  {
+   "la_nina": 0.0,
+   "neutral": 0.006,
+   "el_nino": 0.994
+  },
+  {
+   "la_nina": 0.0,
+   "neutral": 0.028,
+   "el_nino": 0.972
+  },
+  {
+   "la_nina": 0.004,
+   "neutral": 0.105,
+   "el_nino": 0.891
+  },
+  {
+   "la_nina": 0.032,
+   "neutral": 0.291,
+   "el_nino": 0.677
+  },
+  {
+   "la_nina": 0.145,
+   "neutral": 0.465,
+   "el_nino": 0.389
+  }
+ ],
+ "category": [
+  "Weak El Ni\u00f1o",
+  "Moderate El Ni\u00f1o",
+  "Moderate El Ni\u00f1o",
+  "Strong El Ni\u00f1o",
+  "Strong El Ni\u00f1o",
+  "Strong El Ni\u00f1o",
+  "Strong El Ni\u00f1o",
+  "Strong El Ni\u00f1o",
+  "Moderate El Ni\u00f1o",
+  "Weak El Ni\u00f1o",
+  "Neutral"
+ ]
+}

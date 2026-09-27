@@ -1,0 +1,25 @@
+{
+ "summary": {
+  "n": 2,
+  "mae": 0.15,
+  "mae_persistence": 0.675
+ },
+ "rows": [
+  {
+   "issued": "2026-06",
+   "lead": 1,
+   "season": "MJJ 2026",
+   "forecast": 0.87,
+   "persistence": 0.49,
+   "observed": 0.97
+  },
+  {
+   "issued": "2026-06",
+   "lead": 2,
+   "season": "JJA 2026",
+   "forecast": 1.16,
+   "persistence": 0.49,
+   "observed": 1.36
+  }
+ ]
+}
