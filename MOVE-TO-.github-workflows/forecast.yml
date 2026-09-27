@@ -1,0 +1,77 @@
+name: Monthly ENSO forecast
+
+on:
+  schedule:
+    # NOAA updates its files in the first ~10 days of each month. Checking
+    # daily is cheap: the job exits in seconds when nothing new is in.
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Re-run even if there is no new month of data"
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+    paths: ["docs/**"]   # redeploy when you edit the dashboard or official.json
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: forecast
+  cancel-in-progress: false
+
+jobs:
+  forecast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      changed: ${{ steps.save.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Forecast
+        if: github.event_name != 'push'
+        run: python -m enso.run ${{ inputs.force && '--force' || '' }}
+
+      - name: Save results
+        id: save
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then echo "changed=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/data
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git commit -m "Forecast update [skip ci]"
+            git pull --rebase origin main
+            git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/upload-pages-artifact@v3
+        if: steps.save.outputs.changed == 'true'
+        with:
+          path: docs
+
+  deploy:
+    needs: forecast
+    if: needs.forecast.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

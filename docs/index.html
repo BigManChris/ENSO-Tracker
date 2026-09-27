@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ENSO Tracker</title>
+  <meta name="description" content="A homemade El Niño forecast, updated monthly, with an honest public track record.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="wrap head">
+    <p class="kicker">El Niño forecast · updated monthly</p>
+    <h1 id="headline">Loading the latest forecast…</h1>
+    <p class="sub" id="subline"></p>
+  </header>
+
+  <main class="wrap">
+    <section class="tiles" id="tiles"></section>
+
+    <section class="block">
+      <div class="block-head">
+        <h2>Forecast of the Relative Oceanic Niño Index</h2>
+        <label class="toggle"><input type="checkbox" id="show-past"> Show my earlier forecasts</label>
+      </div>
+      <p class="note">RONI is NOAA's official El Niño index: how much warmer the central Pacific is than the tropics as a whole, in °C, averaged over three months. Above +0.5 is El Niño, below −0.5 is La Niña. The shaded band is the 80% range, sized from how wrong the back-tested forecasts were at each lead.</p>
+      <div class="legend" id="plume-legend"></div>
+      <div class="chart" id="plume"></div>
+    </section>
+
+    <section class="block">
+      <h2>Chance of each phase</h2>
+      <div class="legend" id="prob-legend"></div>
+      <div class="chart" id="probs"></div>
+    </section>
+
+    <section class="block two">
+      <div>
+        <h2>How good is it? Back-tested skill</h2>
+        <p class="note" id="skill-note">Correlation between forecast and what happened, for forecasts made using only data available at the time. 1 is perfect; below about 0.5 is barely useful.</p>
+        <div class="legend" id="skill-legend"></div>
+        <div class="chart" id="skill"></div>
+      </div>
+      <div>
+        <h2>The spring barrier</h2>
+        <p class="note">Same skill, split by the month the forecast was made. Forecasts that have to cross March–May lose skill fastest: El Niño is hardest to call in spring.</p>
+        <div class="chart" id="barrier"></div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>Track record</h2>
+      <p class="note" id="track-note">Every forecast is saved the day it is made and never edited. As the real values arrive, they are scored here.</p>
+      <div class="table-wrap"><table id="track"><thead><tr>
+        <th>Forecast made</th><th>Season</th><th class="num">Lead</th><th class="num">Forecast</th><th class="num">Persistence</th><th class="num">Observed</th><th class="num">Error</th>
+      </tr></thead><tbody></tbody></table></div>
+    </section>
+
+    <section class="block">
+      <h2>Model details</h2>
+      <div class="table-wrap"><table id="detail"></table></div>
+    </section>
+  </main>
+
+  <footer class="wrap foot">
+    Data: NOAA Climate Prediction Center (<a href="https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/">RONI</a>, Niño region SSTs, equatorial heat content).
+    Official forecasts: <a href="https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/outlook/">NOAA RONI outlook</a> ·
+    <a href="https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/">IRI ENSO forecast</a>.
+    <a href="https://github.com/BigManChris/ENSO-Tracker">Source on GitHub</a>. A student project, not an official forecast.
+  </footer>
+  <div class="tip" id="tip" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>

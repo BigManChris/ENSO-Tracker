@@ -1,0 +1,6 @@
+{
+ "_how_to_update": "Optional. Once a month, copy the average forecast from the IRI plume (https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/) or the NOAA RONI outlook into 'values', keyed by season exactly as the dashboard shows it (e.g. 'SON 2026'). Leave 'values' empty to hide the dots. Note: IRI forecasts the traditional Nino3.4 index, which runs a little different from RONI.",
+ "source": "IRI plume average",
+ "short": "IRI",
+ "values": {}
+}
