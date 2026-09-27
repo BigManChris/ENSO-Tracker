@@ -113,14 +113,70 @@ def scorecard(d, forecasts):
     return {"summary": summary, "rows": rows}
 
 
+def truncate(d, M):
+    """The data as it stood at the end of month M: everything later is removed."""
+    return {name: {m: v for m, v in series.items() if m <= M} for name, series in d.items()}
+
+
+def backtest_and_forecast(d, M, n_nets):
+    """Back-test on data up to M (for the error bars), then forecast from M."""
+    print(f"back-testing with data through {data.month_label(M)} (a couple of minutes)...")
+    hm, hY, hP = hindcast.run_hindcast(d, n_nets=n_nets)
+    sk = hindcast.skill(hY, hP)
+    sigma = [row["rmse"] for row in sk["Ensemble"]]
+    skill_json = {
+        "period": f"{data.month_label(hm[0])} to {data.month_label(hm[-1])}",
+        "by_model": sk,
+        "barrier": hindcast.skill_by_start_month(hm, hY, hP["Ensemble"]),
+        "month_names": data.MONTH_NAMES,
+    }
+    return make_forecast(d, M, sigma, n_nets), skill_json
+
+
+def replay(full, label, docs, n_nets):
+    """Pretend it's the end of month `label`: forecast using only data up to
+    then, and compare with what actually happened afterwards."""
+    M = data.month_index(*map(int, label.split("-")))
+    d = truncate(full, M)
+    M = latest_issue_month(d)  # in case one file was missing that month
+    fc, _ = backtest_and_forecast(d, M, n_nets)
+    fc["replay"] = True
+    fc["made_at"] = "replay"
+    fc["observed"] = [full["roni"].get(M + k) for k in range(1, LEADS + 1)]
+    rows = [(f, o, p) for f, o, p in zip(fc["ensemble"], fc["observed"], fc["models"]["Persistence"])
+            if o is not None]
+    if rows:
+        fc["summary"] = {
+            "n": len(rows),
+            "mae": round(sum(abs(f - o) for f, o, _ in rows) / len(rows), 3),
+            "mae_persistence": round(sum(abs(p - o) for _, o, p in rows) / len(rows), 3),
+            "max_error": round(max(abs(f - o) for f, o, _ in rows), 3),
+        }
+    out = docs / "replays" / f"{data.month_label(M)}.json"
+    save(out, fc)
+    save(docs / "replays" / "index.json",
+         sorted(p.stem for p in (docs / "replays").glob("*.json") if p.stem != "index"))
+    for s, f, o in zip(fc["seasons"], fc["ensemble"], fc["observed"]):
+        print(f"  {s}: forecast {f:+.2f}  observed {'   -  ' if o is None else f'{o:+.2f}'}")
+    if rows:
+        print(f"  average error {fc['summary']['mae']:.2f} vs {fc['summary']['mae_persistence']:.2f} for 'no change'")
+
+
 def main(argv=None, fetcher=data.fetch, docs=None):
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--force", action="store_true", help="re-run even if nothing new")
     ap.add_argument("--nets", type=int, default=10, help="neural nets per bag")
+    ap.add_argument("--as-of", nargs="+", metavar="YYYY-MM",
+                    help="replay mode: forecast as if it were the end of these months "
+                         "and compare with what happened next")
     args = ap.parse_args(argv)
     docs = docs or DOCS
 
     d = data.load_all(fetcher)
+    if args.as_of:
+        for label in args.as_of:
+            replay(d, label, docs, args.nets)
+        return True
     M = latest_issue_month(d)
     label = data.month_label(M)
     state = load(docs / "state.json", {})
@@ -130,18 +186,8 @@ def main(argv=None, fetcher=data.fetch, docs=None):
         print("no new data, nothing to do")
         return False
 
-    print("back-testing (this takes a couple of minutes)...")
-    hm, hY, hP = hindcast.run_hindcast(d, n_nets=args.nets)
-    sk = hindcast.skill(hY, hP)
-    sigma = [row["rmse"] for row in sk["Ensemble"]]
-    save(docs / "skill.json", {
-        "period": f"{data.month_label(hm[0])} to {data.month_label(hm[-1])}",
-        "by_model": sk,
-        "barrier": hindcast.skill_by_start_month(hm, hY, hP["Ensemble"]),
-        "month_names": data.MONTH_NAMES,
-    })
-
-    fc = make_forecast(d, M, sigma, args.nets)
+    fc, skill_json = backtest_and_forecast(d, M, args.nets)
+    save(docs / "skill.json", skill_json)
     archive = docs / "forecasts" / f"{label}.json"
     if not archive.exists():  # the first forecast for a month is the one that counts
         save(archive, fc)

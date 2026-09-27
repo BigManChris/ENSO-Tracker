@@ -41,5 +41,5 @@ def fake_fetcher(last=(2026, 8), seed=1):
     from enso import data
     T, h, m0 = simulate(last=last, seed=seed)
     roni, nino, heat = as_noaa_text(T, h, m0)
-    files = {data.RONI_URL: roni, data.NINO_URL: nino, data.HEAT_URL: heat}
+    files = {data.RONI_URL: roni, data.NINO_URL: nino, data.HEAT_URL: heat, data.NINO_URL_2: ""}
     return lambda url: files[url]

@@ -55,6 +55,18 @@
       </tr></thead><tbody></tbody></table></div>
     </section>
 
+    <section class="block" id="replay-block" hidden>
+      <div class="block-head">
+        <h2>Replays: what would it have said back then?</h2>
+        <label class="toggle">Pretend it's the end of <select id="replay-pick"></select></label>
+      </div>
+      <p class="note">The whole pipeline re-run using only data up to that month (back-test, training and forecast), then laid over what really happened. Unlike the track record, these are made after the fact, so treat them as a test, not proof.</p>
+      <div class="tiles" id="replay-tiles"></div>
+      <div class="legend" id="replay-legend"></div>
+      <div class="chart" id="replay-chart"></div>
+      <div class="table-wrap"><table id="replay-table"></table></div>
+    </section>
+
     <section class="block">
       <h2>Model details</h2>
       <div class="table-wrap"><table id="detail"></table></div>

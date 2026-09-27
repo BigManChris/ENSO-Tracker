@@ -20,6 +20,9 @@ import urllib.request
 
 RONI_URL = "https://www.cpc.ncep.noaa.gov/data/indices/RONI.ascii.txt"
 NINO_URL = "https://www.cpc.ncep.noaa.gov/data/indices/ersst5.nino.mth.91-20.ascii"
+# Same columns, updated on a different schedule; used to fill any months the
+# first file hasn't caught up with yet.
+NINO_URL_2 = "https://www.cpc.ncep.noaa.gov/data/indices/sstoi.indices"
 HEAT_URL = ("https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/"
             "ocean/index/heat_content_index.txt")
 
@@ -119,9 +122,18 @@ def parse_heat(text):
     return out
 
 
-def load_all(fetcher=fetch):
-    return {
-        "roni": parse_roni(fetcher(RONI_URL)),
-        "nino": parse_nino(fetcher(NINO_URL)),
-        "heat": parse_heat(fetcher(HEAT_URL)),
-    }
+def load_all(fetcher=fetch, log=print):
+    nino = parse_nino(fetcher(NINO_URL))
+    try:
+        extra = parse_nino(fetcher(NINO_URL_2))
+    except Exception as e:  # the backup file is optional
+        log(f"backup Niño file unavailable: {e}")
+        extra = {}
+    filled = sorted(m for m in extra if m not in nino and m > max(nino, default=0))
+    for m in filled:
+        nino[m] = extra[m]
+    d = {"roni": parse_roni(fetcher(RONI_URL)), "nino": nino, "heat": parse_heat(fetcher(HEAT_URL))}
+    for name, series in d.items():
+        log(f"  {name:5s} data runs to {month_label(max(series))}"
+            + (f" ({len(filled)} month(s) from sstoi.indices)" if name == "nino" and filled else ""))
+    return d

@@ -39,6 +39,19 @@ The published forecast is the average of Analog, Ridge and the neural net. The 8
 
 `enso/hindcast.py` stands at every month since 1998 and forecasts using only what was known then. Models are retrained every two years on data whose outcomes had already been observed, and a test (`test_hindcast_does_not_peek_at_the_future`) checks that changing future data can't change past forecasts. The dashboard shows the resulting skill by lead time, and a heatmap that makes the famous **spring predictability barrier** visible: forecasts that have to cross March–May lose skill fastest.
 
+## Replays: "what would it have said in February?"
+
+You can re-run the whole pipeline as if it were an earlier month. Everything after that month is deleted first: back-test, training and forecast all only see the older data. The replay is then laid over what actually happened.
+
+```bash
+python -m enso.run --as-of 2026-02            # one month
+python -m enso.run --as-of 2025-11 2026-02    # several
+```
+
+On GitHub: **Actions → Monthly ENSO forecast → Run workflow** and fill in the *as_of* box. Replays appear in their own section of the dashboard with a month picker. They show average error versus "no change", how many seasons got the right phase, and how often the truth landed inside the 80% range.
+
+Two caveats. A replay is made after the fact, so it isn't as convincing as the live track record: you could keep tweaking the model until February looks good. Also, NOAA slightly revises old data, so the inputs aren't exactly what was available at the time.
+
 ## Comparing with the professionals
 
 IRI no longer publishes its forecast plume as downloadable data. To put their numbers on your chart, copy the plume average into [`docs/data/official.json`](docs/data/official.json) once a month (it takes about a minute) and push. The dots appear automatically. IRI forecasts the traditional Niño 3.4 index, which runs a little different from RONI, so treat it as a rough comparison.
@@ -60,4 +73,10 @@ python -m enso.run --force     # needs internet access to NOAA
 pytest                         # uses simulated data, no internet needed
 ```
 
+## Ideas for version 2
 
+- A CNN on full Pacific temperature maps (Ham et al., *Nature* 2019), pre-trained on climate-model runs to get around the small-data problem.
+- Add wind data (westerly wind bursts often trigger El Niño).
+- Link to impacts: how RONI forecasts line up with cocoa, coffee or palm-oil prices.
+
+*A student project, not an official forecast.*

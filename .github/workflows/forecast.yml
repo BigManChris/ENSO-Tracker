@@ -11,6 +11,10 @@ on:
         description: "Re-run even if there is no new month of data"
         type: boolean
         default: false
+      as_of:
+        description: "Replay instead: pretend it's the end of these months, e.g. 2026-02 2025-11 (blank = normal forecast)"
+        type: string
+        default: ""
   push:
     branches: [main]
     paths: ["docs/**"]   # redeploy when you edit the dashboard or official.json
@@ -42,7 +46,15 @@ jobs:
 
       - name: Forecast
         if: github.event_name != 'push'
-        run: python -m enso.run ${{ inputs.force && '--force' || '' }}
+        env:
+          AS_OF: ${{ inputs.as_of }}
+          FORCE: ${{ inputs.force && '--force' || '' }}
+        run: |
+          if [ -n "$AS_OF" ]; then
+            python -m enso.run --as-of $AS_OF
+          else
+            python -m enso.run $FORCE
+          fi
 
       - name: Save results
         id: save

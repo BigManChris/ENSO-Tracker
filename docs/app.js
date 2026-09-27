@@ -96,11 +96,16 @@ function strength(v) {
 
 /* ---------- main plume chart ---------- */
 function renderPlume() {
+  plume({ sel: "#plume", legend: "#plume-legend", fc: FC, official: OFFICIAL, showPast: $("#show-past").checked });
+}
+
+function plume(opts) {
+  const { fc: FC, official: OFFICIAL } = opts;
   const M = idx(FC.issued);
   const leads = FC.seasons.length;
-  const obs = OBS.map((o) => ({ m: idx(o.end), v: o.roni })).filter((o) => o.m > M - 24);
+  const obs = OBS.map((o) => ({ m: idx(o.end), v: o.roni })).filter((o) => o.m > M - 24 && o.m <= M + leads);
   const x0 = obs.length ? obs[0].m : M - 24, x1 = M + leads;
-  const showPast = $("#show-past").checked;
+  const showPast = opts.showPast;
   const past = showPast ? PAST.filter((p) => p.issued !== FC.issued) : [];
   const official = (OFFICIAL?.values ? Object.entries(OFFICIAL.values) : [])
     .map(([s, v]) => ({ i: FC.seasons.indexOf(s), v })).filter((o) => o.i >= 0);
@@ -110,7 +115,7 @@ function renderPlume() {
   const lo = Math.min(-1.5, Math.floor((Math.min(...vals) - 0.2) * 2) / 2);
   const hi = Math.max(1.5, Math.ceil((Math.max(...vals) + 0.2) * 2) / 2);
 
-  const f = frame("#plume", 400);
+  const f = frame(opts.sel, 400);
   const X = (m) => f.m.l + ((m - x0) / (x1 - x0)) * f.iw;
   const Y = (v) => f.m.t + ((hi - v) / (hi - lo)) * f.ih;
   const g = el("g", {}, f.svg);
@@ -195,7 +200,7 @@ function renderPlume() {
     ["80% range", "var(--band)", "box"], ["Individual models", "var(--text-muted)"], ["Persistence (no change)", "var(--text-muted)", "dash"]];
   if (official.length) items.push([OFFICIAL.source || "Official forecast", "var(--series-2)", "dot"]);
   if (past.length) items.push(["My earlier forecasts", "var(--series-3)"]);
-  legend("#plume-legend", items);
+  legend(opts.legend, items);
 }
 
 /* ---------- probability bars ---------- */
@@ -326,6 +331,46 @@ function renderDetail() {
   $("#detail").innerHTML = head + `<tbody>${body}</tbody>`;
 }
 
+/* ---------- replays ---------- */
+async function renderReplay(label) {
+  const R = await getJSON(`data/replays/${label}.json`, null);
+  if (!R) return;
+  plume({ sel: "#replay-chart", legend: "#replay-legend", fc: R, official: null, showPast: false });
+  const n = R.observed.filter((o) => o != null).length;
+  const inRange = R.observed.filter((o, i) => o != null && Math.abs(o - R.ensemble[i]) <= Z80 * R.sigma[i]).length;
+  const phaseOk = R.observed.filter((o, i) => o != null && strength(o).split(" ").pop() === R.category[i].split(" ").pop()).length;
+  const s = R.summary;
+  $("#replay-tiles").innerHTML = !n ? `<p class="note">Nothing to compare yet: no later data.</p>` : [
+    ["Average error", s.mae.toFixed(2) + "°C", `"No change" would have been off by ${s.mae_persistence.toFixed(2)}°C`],
+    ["Right phase", `${phaseOk} of ${n}`, "seasons called correctly as El Niño, La Niña or neutral"],
+    ["Inside the 80% range", `${inRange} of ${n}`, "about 80% is what a well-calibrated forecast should get"],
+    ["Worst miss", s.max_error.toFixed(2) + "°C", `data through ${R.data_through}`],
+  ].map(([l, v, f]) => `<div class="tile"><div class="label">${esc(l)}</div><div class="value">${esc(v)}</div><div class="tfoot">${esc(f)}</div></div>`).join("");
+  $("#replay-table").innerHTML = `<thead><tr><th>Season</th><th class="num">Lead</th><th class="num">Forecast</th><th class="num">80% range</th>
+    <th class="num">Persistence</th><th class="num">Observed</th><th class="num">Error</th></tr></thead><tbody>` +
+    R.seasons.map((ss, i) => {
+      const o = R.observed[i];
+      return `<tr><td>${esc(ss)}</td><td class="num">${i + 1}</td><td class="num">${sign(R.ensemble[i])}</td>
+        <td class="num">${sign(R.ensemble[i] - Z80 * R.sigma[i], 1)} to ${sign(R.ensemble[i] + Z80 * R.sigma[i], 1)}</td>
+        <td class="num">${sign(R.models.Persistence[i])}</td><td class="num"><b>${o == null ? "not yet" : sign(o)}</b></td>
+        <td class="num">${o == null ? "" : sign(R.ensemble[i] - o)}</td></tr>`;
+    }).join("") + "</tbody>";
+}
+
+async function setupReplays() {
+  const list = await getJSON("data/replays/index.json", []);
+  if (!list.length) return;
+  $("#replay-block").hidden = false;
+  const pick = $("#replay-pick");
+  pick.innerHTML = list.slice().reverse().map((m) => {
+    const [y, mo] = m.split("-").map(Number);
+    return `<option value="${esc(m)}">${MONTHS[mo - 1]} ${y}</option>`;
+  }).join("");
+  pick.addEventListener("change", () => renderReplay(pick.value));
+  addEventListener("resize", () => { clearTimeout(pick._t); pick._t = setTimeout(() => renderReplay(pick.value), 150); });
+  renderReplay(pick.value);
+}
+
 /* ---------- boot ---------- */
 function renderCharts() { renderPlume(); renderProbs(); renderSkill(); renderBarrier(); }
 
@@ -345,6 +390,7 @@ async function boot() {
   renderCharts();
   renderTrack();
   renderDetail();
+  setupReplays();
   $("#show-past").addEventListener("change", renderPlume);
   let t;
   addEventListener("resize", () => { clearTimeout(t); t = setTimeout(renderCharts, 150); });

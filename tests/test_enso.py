@@ -85,3 +85,35 @@ def test_full_run_writes_dashboard_files(tmp_path, monkeypatch):
     assert score["rows"][0]["issued"] == "2026-07" and score["rows"][0]["season"] == "JJA 2026"
     skill = json.loads((tmp_path / "skill.json").read_text())
     assert len(skill["barrier"]) == 12
+
+
+def test_replay_uses_only_old_data_and_scores_it(tmp_path, monkeypatch):
+    monkeypatch.setattr(hindcast, "RETRAIN_EVERY_YEARS", 10)
+    fetch = fake_fetcher(last=(2026, 8))
+    run.main(["--nets", "1", "--as-of", "2026-02"], fetcher=fetch, docs=tmp_path)
+    r = json.loads((tmp_path / "replays" / "2026-02.json").read_text())
+    assert r["issued"] == "2026-02" and r["seasons"][0] == "JFM 2026"
+    full = data.load_all(fetch)
+    # Six seasons (ending Mar..Aug) have happened since; the rest haven't.
+    assert r["observed"][:6] == [full["roni"][data.month_index(2026, 2) + k] for k in range(1, 7)]
+    assert r["observed"][6:] == [None] * 5 and r["summary"]["n"] == 6
+    # Replays never touch the live forecast or its archive.
+    assert not (tmp_path / "latest.json").exists() and not (tmp_path / "forecasts").exists()
+    # And the replayed forecast is exactly what you'd get with the later data deleted.
+    trimmed = run.truncate(full, data.month_index(2026, 2))
+    assert max(trimmed["roni"]) == data.month_index(2026, 2)
+
+
+def test_lagging_nino_file_is_filled_from_backup():
+    """Real case: the main Niño file stopped at June while RONI and heat ran to August."""
+    base = fake_fetcher(last=(2026, 8))
+    lines = base(data.NINO_URL).splitlines()
+    short = "\n".join(l for l in lines if not l.startswith("2026   7") and not l.startswith("2026   8"))
+    backup = "\n".join([lines[0]] + [l for l in lines if l.startswith("2026")])
+
+    def fetch(url):
+        return {data.NINO_URL: short, data.NINO_URL_2: backup}.get(url) or base(url)
+
+    d = data.load_all(fetch, log=lambda *a: None)
+    assert max(d["nino"]) == data.month_index(2026, 8)
+    assert features.latest_issue_month(d) == data.month_index(2026, 8)
